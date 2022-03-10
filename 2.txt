@@ -1,9 +1,0 @@
-1
-2
-2.txt
-a.out
-git_push.sh
-libft
-pipex.c
-pipex.h
-Мануалы

@@ -11,104 +11,60 @@
 /* ************************************************************************** */
 
 #include "pipex.h"
-# include <stdio.h>
-# include <unistd.h>
-# include <stdlib.h>
 
-void writer(char *argv[], char *envp[], int *fd)
+void	writer(char *argv[], char *envp[], int *fd)
 {
-	int i = 0;
-	int f2;
-	
-	char 	**s;
-	char	*s1;
-	char 	**s2;
-	
+	int	f2;
+
 	f2 = open(argv[4], O_WRONLY | O_CREAT | O_TRUNC, 0777);
-	
-	dup2(fd[0], 0);
-	dup2(f2, 1);
+	if (f2 == -1 || access(argv[4], W_OK) == -1)
+		ft_perror(ERR_F2);
+	if (dup2(fd[0], 0) == -1)
+		ft_perror(ERR_DUP);
+	if (dup2(f2, 1) == -1)
+		ft_perror(ERR_F2);
 	close(fd[1]);
-	
-	
-	while (!(ft_strnstr(envp[i], "PATH=", 5)))
-	{
-		i++;
-		if (envp[i] == NULL)
-		{
-			exit (-1);
-		}
-	}
-	s = ft_split(envp[i] + 5, ':');
-	i = -1;
-	s2 = ft_split(argv[3], ' ');
-	i = 0;
-	while (s[i])
-	{
-		s1 = ft_strjoin(s[i], "/");
-		s1 = ft_strjoin(s1, s2[0]);
-		if (access(s1, F_OK) == 0)
-		{
-			execve(s1, s2, envp);
-		}
-		i++;
-	}
+	ft_exec(argv[3], envp);
 }
 
-void reader(char *argv[], char *envp[], int *fd)
+void	reader(char *argv[], char *envp[], int *fd)
 {
-	int i = 0;
-	
-	char 	**s;
-	char	*s1;
-	char 	**s2;
-	int		f1;
-	
+	int	f1;
+
+	if (access(argv[1], F_OK) == -1 || access(argv[1], R_OK) == -1)
+		ft_perror(ERR_F1);
 	f1 = open(argv[1], O_RDONLY);
-	dup2(f1, 0);
+	if (f1 == -1)
+		ft_perror(ERR_F1);
+	if (dup2(f1, 0) == -1)
+		ft_perror(ERR_F1);
 	close(f1);
-	dup2(fd[1], 1);
+	if (dup2(fd[1], 1) == -1)
+		ft_perror(ERR_DUP);
 	close(fd[1]);
-	
-	
-	while (!(ft_strnstr(envp[i], "PATH=", 5)))
-	{
-		i++;
-		if (envp[i] == NULL)
-		{
-			exit (-1);
-		}
-	}
-	s = ft_split(envp[i] + 5, ':');
-	i = -1;
-	s2 = ft_split(argv[2], ' ');
-	i = 0;
-	while (s[i])
-	{
-		s1 = ft_strjoin(s[i], "/");
-		s1 = ft_strjoin(s1, s2[0]);
-		if (access(s1, F_OK) == 0)
-		{
-			execve(s1, s2, envp);
-		}
-		i++;
-	}
+	ft_exec(argv[2], envp);
 }
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	int 	fd[2];
+	int		fd[2];
 	pid_t	id;
-	
+
 	if (argc == 5)
 	{
-		pipe(fd);
+		if (pipe(fd) == -1)
+			ft_perror(ERR_PIPE);
 		id = fork();
+		if (id == -1)
+			ft_perror(ERR_FORK);
 		if (id == 0)
 			reader(argv, envp, fd);
 		waitpid(id, 0, 0);
 		if (id > 0)
 			writer(argv, envp, fd);
+		close (fd[0]);
+		close (fd[1]);
+		return (0);
 	}
-	return (0);
+	ft_perror(ERR_ARGC);
 }
